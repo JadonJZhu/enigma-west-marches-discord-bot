@@ -1,4 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
+const CommandHandler = require('./handlers/commandHandler');
+const EventHandler = require('./handlers/eventHandler');
 require('dotenv').config();
 
 const client = new Client({
@@ -9,19 +11,26 @@ const client = new Client({
     ],
 });
 
-// Event: Bot ready
-client.once('clientReady', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-});
+// Initialize handlers
+client.commandHandler = new CommandHandler(client);
+client.eventHandler = new EventHandler(client);
 
-// Event: Message received
-client.on('messageCreate', (message) => {
-    if (message.author.bot) return;
+// Initialize the bot
+async function init() {
+    try {
+        // Load commands
+        await client.commandHandler.loadCommands();
 
-    if (message.content === '!ping') {
-        message.reply('Pong!');
+        // Load events
+        await client.eventHandler.loadEvents();
+
+        // Login with bot token
+        await client.login(process.env.TOKEN);
+
+    } catch (error) {
+        console.error('Error during bot initialization:', error);
+        process.exit(1);
     }
-});
+}
 
-// Login with bot token
-client.login(process.env.TOKEN);
+init();

@@ -56,12 +56,24 @@ class CommandHandler {
         try {
             console.log('Started refreshing application (/) commands.');
 
-            await rest.put(
-                Routes.applicationCommands(this.client.user.id),
-                { body: commands }
-            );
+            // Check if GUILD_ID is set for guild-specific commands
+            const guildId = process.env.GUILD_ID;
 
-            console.log('Successfully reloaded application (/) commands.');
+            if (guildId) {
+                console.log(`Registering commands as guild-specific for guild: ${guildId}`);
+                await rest.put(
+                    Routes.applicationGuildCommands(this.client.user.id, guildId),
+                    { body: commands }
+                );
+                console.log('Successfully reloaded guild-specific application (/) commands.');
+            } else {
+                console.log('No GUILD_ID specified, registering commands globally.');
+                await rest.put(
+                    Routes.applicationCommands(this.client.user.id),
+                    { body: commands }
+                );
+                console.log('Successfully reloaded global application (/) commands.');
+            }
         } catch (error) {
             console.error('Error registering slash commands:', error);
         }

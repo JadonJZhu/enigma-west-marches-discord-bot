@@ -145,3 +145,5 @@ playwright-report/
 # Miscellaneous
 *.tgz
 *.tar.gz
+
+data/

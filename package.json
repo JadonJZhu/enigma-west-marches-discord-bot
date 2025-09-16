@@ -2,8 +2,10 @@
   "name": "enigma-west-marches-discord-bot",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,5 +22,10 @@
   "dependencies": {
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   }
 }

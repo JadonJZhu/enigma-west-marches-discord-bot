@@ -5,6 +5,10 @@ module.exports = {
         if (interaction.isCommand()) {
             await client.commandHandler.handleSlashCommand(interaction);
         }
+        // Handle autocomplete interactions
+        else if (interaction.isAutocomplete()) {
+            await client.commandHandler.handleAutocomplete(interaction);
+        }
         // Handle button interactions
         else if (interaction.isButton()) {
             // Handle button interactions here if needed

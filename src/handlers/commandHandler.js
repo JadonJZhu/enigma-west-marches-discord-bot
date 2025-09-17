@@ -130,6 +130,25 @@ class CommandHandler {
     }
 
     /**
+     * Handle autocomplete interactions
+     */
+    async handleAutocomplete(interaction) {
+        if (!interaction.isAutocomplete()) return;
+
+        const command = this.slashCommands.get(interaction.commandName);
+
+        if (!command || !command.autocomplete) return;
+
+        try {
+            await command.autocomplete(interaction);
+        } catch (error) {
+            console.error('Error handling autocomplete:', error);
+            // Respond with empty array on error to prevent interaction failure
+            await interaction.respond([]);
+        }
+    }
+
+    /**
      * Get all loaded commands
      */
     getCommands() {

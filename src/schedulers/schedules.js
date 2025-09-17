@@ -4,16 +4,16 @@
 const schedules = [
     {
         name: 'sunday_downtime_selection',
-        cronExpression: '0 12 * * 0', // Sunday 12:00 PM
+        cronExpression: '28 17 * * 2', // Sunday 12:00 PM
         timezone: 'America/Los_Angeles',
         description: 'Weekly Sunday downtime selection messages',
         enabled: true
     },
     {
-        name: 'tuesday_qotw',
-        cronExpression: '5 17 * * 2', // Tuesday 5:05 PM
+        name: 'sunday_qotw',
+        cronExpression: '0 12 * * 0', // Sunday 12:00 PM
         timezone: 'America/Los_Angeles',
-        description: 'Weekly Tuesday Question of the Week',
+        description: 'Weekly Sunday Question of the Week',
         enabled: true
     },
     // Example schedules for future use:

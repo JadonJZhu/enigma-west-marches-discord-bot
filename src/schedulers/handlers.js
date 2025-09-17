@@ -7,10 +7,20 @@ const path = require('path');
 const handlers = {
     async sunday_downtime_selection(client) {
         try {
-            const channel = await client.channels.fetch('1382565072571990047');
+            // Find the downtimes channel by name
+            const channel = client.channels.cache.find(ch => ch.name === 'downtimes');
 
             if (!channel) {
-                console.error('Could not find channel with ID: 1382565072571990047');
+                console.error('Could not find channel named "downtimes"');
+
+                // Try to find bot-updates channel for error message
+                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-updates');
+                if (botUpdatesChannel) {
+                    await botUpdatesChannel.send('Error: Could not find "downtimes" channel for downtime selection.');
+                    console.log('Error message sent to bot-updates channel');
+                } else {
+                    console.error('Could not find "bot-updates" channel either. Doing nothing.');
+                }
                 return;
             }
 
@@ -52,18 +62,28 @@ const handlers = {
                 }
             }
 
-            console.log('Tuesday downtime selection completed successfully');
+            console.log('Sunday downtime selection completed successfully');
         } catch (error) {
-            console.error('Error sending Tuesday downtime selection:', error);
+            console.error('Error sending Sunday QOTW:', error);
         }
     },
 
-    async tuesday_qotw(client) {
+    async sunday_qotw(client) {
         try {
-            const channel = await client.channels.fetch('1382565072571990047');
+            // Find the qotw channel by name
+            const qotwChannel = client.channels.cache.find(ch => ch.name === 'qotw');
 
-            if (!channel) {
-                console.error('Could not find channel with ID: 1382565072571990047');
+            if (!qotwChannel) {
+                console.error('Could not find channel named "qotw"');
+
+                // Try to find bot-updates channel for error message
+                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-updates');
+                if (botUpdatesChannel) {
+                    await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week.');
+                    console.log('Error message sent to bot-updates channel');
+                } else {
+                    console.error('Could not find "bot-updates" channel either. Doing nothing.');
+                }
                 return;
             }
 
@@ -71,6 +91,21 @@ const handlers = {
             const qotwPath = path.join(__dirname, '../../data/qotw.json');
             const qotwData = await fs.readFile(qotwPath, 'utf8');
             const qotw = JSON.parse(qotwData);
+
+            // Send reward message to previous respondents and clear the list
+            const previousRespondents = qotw['respondent-ids'] || [];
+            if (previousRespondents.length > 0) {
+                const rewardMessage = qotw['reward-message'] || 'Thanks for participating!';
+                const userMentions = previousRespondents.map(id => `<@${id}>`).join(' ');
+
+                await qotwChannel.send(`${userMentions}\n${rewardMessage}`);
+                console.log('Reward message sent to previous respondents');
+            }
+
+            // Clear respondent IDs for new question
+            qotw['respondent-ids'] = [];
+            await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
+            console.log('Respondent IDs cleared for new QOTW');
 
             // Get current question
             const currentIndex = qotw['current-qotw-index'] || 0;
@@ -81,23 +116,59 @@ const handlers = {
                 return;
             }
 
-            // Get the current question, cycling back to start if at end
-            const currentQuestion = questions[currentIndex % questions.length];
+            // Check if we've run out of questions
+            if (currentIndex >= questions.length) {
+                // Send message indicating no questions left
+                await qotwChannel.send('There are no QOTW questions left!');
+                console.log('No QOTW questions left message sent');
+                return;
+            }
+
+            // Get the current question
+            const currentQuestion = questions[currentIndex];
 
             // Send the question
-            await channel.send(`**Question of the Week:**\n${currentQuestion}`);
+            const qotwMessage = await qotwChannel.send(`**Question of the Week:**\n${currentQuestion}`);
             console.log('QOTW message sent');
 
+            // If this was the last question, also send the "no questions left" message immediately
+            if (currentIndex === questions.length - 1) {
+                await qotwChannel.send('There are no QOTW questions left!');
+                console.log('No QOTW questions left message sent (last question)');
+            }
+
             // Increment the index
-            const nextIndex = (currentIndex + 1) % questions.length;
-            qotw['current-qotw-index'] = nextIndex;
+            qotw['current-qotw-index'] = currentIndex + 1;
 
             // Save updated data
             await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
             console.log('QOTW index incremented and saved');
 
+            // Set up indefinite message collector to track respondents
+            const collector = qotwChannel.createMessageCollector({
+                filter: (message) => !message.author.bot // Ignore bot messages
+            });
+
+            collector.on('collect', async (message) => {
+                // Read current qotw data
+                const currentQotwData = await fs.readFile(qotwPath, 'utf8');
+                const currentQotw = JSON.parse(currentQotwData);
+
+                // Initialize respondent-ids array if it doesn't exist
+                if (!currentQotw['respondent-ids']) {
+                    currentQotw['respondent-ids'] = [];
+                }
+
+                // Add user ID if not already present
+                if (!currentQotw['respondent-ids'].includes(message.author.id)) {
+                    currentQotw['respondent-ids'].push(message.author.id);
+                    await fs.writeFile(qotwPath, JSON.stringify(currentQotw, null, 4));
+                    console.log(`Added response from user: ${message.author.username} (${message.author.id})`);
+                }
+            });
+
         } catch (error) {
-            console.error('Error sending Tuesday QOTW:', error);
+            console.error('Error sending Sunday QOTW:', error);
         }
     },
 

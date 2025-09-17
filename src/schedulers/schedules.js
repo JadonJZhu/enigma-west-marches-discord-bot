@@ -4,7 +4,7 @@
 const schedules = [
     {
         name: 'sunday_downtime_selection',
-        cronExpression: '28 17 * * 2', // Sunday 12:00 PM
+        cronExpression: '0 12 * * 0', // Sunday 12:00 PM
         timezone: 'America/Los_Angeles',
         description: 'Weekly Sunday downtime selection messages',
         enabled: true

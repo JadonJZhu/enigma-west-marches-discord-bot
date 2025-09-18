@@ -25,12 +25,12 @@ module.exports = {
                 : '*No available downtimes*';
 
             // Create the response embed content
-            const response = `## 📋 Downtime Activities
+            const response = `## Downtime Activities
 
 ### ✅ Active Downtimes (${downtimesData.added.length})
 ${addedList}
 
-### 📚 Available Downtimes (${downtimesData.unadded.length})
+### ❌ Available Downtimes (${downtimesData.unadded.length})
 ${unaddedList}`;
 
             await interaction.reply({

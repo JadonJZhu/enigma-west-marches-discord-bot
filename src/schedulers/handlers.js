@@ -13,13 +13,13 @@ const handlers = {
             if (!channel) {
                 console.error('Could not find channel named "downtimes"');
 
-                // Try to find bot-updates channel for error message
-                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-updates');
+                // Try to find bot-testing channel for error message
+                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-testing');
                 if (botUpdatesChannel) {
                     await botUpdatesChannel.send('Error: Could not find "downtimes" channel for downtime selection.');
-                    console.log('Error message sent to bot-updates channel');
+                    console.log('Error message sent to bot-testing channel');
                 } else {
-                    console.error('Could not find "bot-updates" channel either. Doing nothing.');
+                    console.error('Could not find "bot-testing" channel either. Doing nothing.');
                 }
                 return;
             }
@@ -76,13 +76,13 @@ const handlers = {
             if (!qotwChannel) {
                 console.error('Could not find channel named "qotw"');
 
-                // Try to find bot-updates channel for error message
-                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-updates');
+                // Try to find bot-testing channel for error message
+                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-testing');
                 if (botUpdatesChannel) {
                     await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week.');
-                    console.log('Error message sent to bot-updates channel');
+                    console.log('Error message sent to bot-testing channel');
                 } else {
-                    console.error('Could not find "bot-updates" channel either. Doing nothing.');
+                    console.error('Could not find "bot-testing" channel either. Doing nothing.');
                 }
                 return;
             }
@@ -108,7 +108,7 @@ const handlers = {
             console.log('Respondent IDs cleared for new QOTW');
 
             // Get current question
-            const currentIndex = qotw['current-qotw-index'] || 0;
+            const currentIndex = qotw['upcoming-qotw-index'] || 0;
             const questions = qotw.qotw || [];
 
             if (questions.length === 0) {
@@ -138,7 +138,7 @@ const handlers = {
             }
 
             // Increment the index
-            qotw['current-qotw-index'] = currentIndex + 1;
+            qotw['upcoming-qotw-index'] = currentIndex + 1;
 
             // Save updated data
             await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));

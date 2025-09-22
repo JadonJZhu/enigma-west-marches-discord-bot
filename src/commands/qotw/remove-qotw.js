@@ -6,6 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('remove-qotw')
         .setDescription('Remove a Question of the Week')
+        .setDefaultMemberPermissions(null)
         .addStringOption(option =>
             option.setName('question')
                 .setDescription('The question to remove')

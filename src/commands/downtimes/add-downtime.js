@@ -8,6 +8,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('add-downtime')
         .setDescription('Add a downtime activity to your active list')
+        .setDefaultPermission(false)
         .addStringOption(option =>
             option.setName('activity')
                 .setDescription('The downtime activity to add')

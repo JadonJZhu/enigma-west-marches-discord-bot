@@ -6,6 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('set-upcoming-qotw')
         .setDescription('Set the upcoming Question of the Week')
+        .setDefaultMemberPermissions(null)
         .addStringOption(option =>
             option.setName('question')
                 .setDescription('The question to set as upcoming')

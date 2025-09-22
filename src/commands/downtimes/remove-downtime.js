@@ -8,6 +8,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('remove-downtime')
         .setDescription('Remove a downtime activity from your active list')
+        .setDefaultPermission(false)
         .addStringOption(option =>
             option.setName('activity')
                 .setDescription('The downtime activity to remove')

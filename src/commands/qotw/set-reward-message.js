@@ -6,6 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('set-reward-message')
         .setDescription('Set the reward message for QOTW')
+        .setDefaultMemberPermissions(null)
         .addStringOption(option =>
             option.setName('message')
                 .setDescription('The reward message to set')

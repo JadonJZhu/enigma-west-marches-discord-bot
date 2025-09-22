@@ -5,7 +5,8 @@ const path = require('path');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('show-reward-message')
-        .setDescription('Display the current reward message for QOTW'),
+        .setDescription('Display the current reward message for QOTW')
+        .setDefaultMemberPermissions(null),
     category: 'qotw',
     async execute(interaction) {
         const qotwPath = path.join(__dirname, '../../../data/qotw.json');

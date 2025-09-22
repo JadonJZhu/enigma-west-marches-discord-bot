@@ -34,37 +34,34 @@ const handlers = {
                 return;
             }
 
-            // Create message content with list of added downtimes
-            const downtimeList = downtimes.added.map(downtime => `- ${downtime}`).join('\n');
+            // Create poll answers from downtimes
+            const pollAnswers = downtimes.added.map((downtime) => ({
+                text: downtime.replace(/:[^:]+:$/, '').trim() // Remove emoji from text
+            }));
 
-            // Send first message
-            const firstMessage = await channel.send(`React with your first downtime:\n${downtimeList}`);
-            console.log('First downtime selection message sent');
-
-            // Send second message
-            const secondMessage = await channel.send(`React with your second downtime:\n${downtimeList}`);
-            console.log('Second downtime selection message sent');
-
-            // Extract emojis from added downtimes and react to messages
-            const emojis = downtimes.added.map(downtime => {
-                // Split by space and take the last part (the emoji)
-                const parts = downtime.trim().split(' ');
-                return parts[parts.length - 1];
-            }).filter(emoji => emoji && emoji.length > 0);
-
-            // React to both messages with the extracted emojis
-            for (const emoji of emojis) {
-                try {
-                    await firstMessage.react(emoji);
-                    await secondMessage.react(emoji);
-                } catch (error) {
-                    console.error(`Failed to react with emoji ${emoji}:`, error);
+            // Send first choice poll
+            await channel.send({
+                poll: {
+                    question: { text: 'Choose your FIRST downtime preference for this week:' },
+                    answers: pollAnswers,
+                    duration: 7 * 24, // 1 week in hours
+                    allowMultiselect: false
                 }
-            }
+            });
 
-            console.log('Sunday downtime selection completed successfully');
+            // Send second choice poll
+            await channel.send({
+                poll: {
+                    question: { text: 'Choose your SECOND downtime preference for this week:' },
+                    answers: pollAnswers,
+                    duration: 7 * 24, // 1 week in hours
+                    allowMultiselect: false
+                }
+            });
+
+            console.log('Sunday downtime selection polls sent successfully');
         } catch (error) {
-            console.error('Error sending Sunday QOTW:', error);
+            console.error('Error sending Sunday downtime selection:', error);
         }
     },
 

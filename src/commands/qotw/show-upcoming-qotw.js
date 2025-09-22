@@ -5,7 +5,8 @@ const path = require('path');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('show-upcoming-qotw')
-        .setDescription('Show all Question of the Week questions and the upcoming one'),
+        .setDescription('Show all Question of the Week questions and the upcoming one')
+        .setDefaultMemberPermissions(null),
 
     async execute(interaction) {
         try {

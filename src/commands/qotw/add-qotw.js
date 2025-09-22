@@ -6,6 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('add-qotw')
         .setDescription('Add a new Question of the Week')
+        .setDefaultMemberPermissions(null)
         .addStringOption(option =>
             option.setName('question')
                 .setDescription('The question to add')

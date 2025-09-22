@@ -1,6 +1,6 @@
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { Collection } = require('discord.js');
+const { Collection, ApplicationCommandPermissionType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -74,8 +74,67 @@ class CommandHandler {
                 );
                 console.log('Successfully reloaded global application (/) commands.');
             }
+
+            // Set permissions for restricted commands
+            await this.setCommandPermissions(guildId);
         } catch (error) {
             console.error('Error registering slash commands:', error);
+        }
+    }
+
+    /**
+     * Set permissions for restricted slash commands
+     */
+    async setCommandPermissions(guildId) {
+        const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
+
+        // Define commands that require specific role permissions
+        const restrictedCommands = [
+            // QOTW and Downtime commands are now controlled by server admins through Discord's permission system
+        ];
+
+        const adminRoleId = '1013254145458847885'; // Your admin role ID
+
+        try {
+            // Get the registered commands to find their IDs
+            let commands;
+            if (guildId) {
+                commands = await rest.get(
+                    Routes.applicationGuildCommands(this.client.user.id, guildId)
+                );
+            } else {
+                commands = await rest.get(
+                    Routes.applicationCommands(this.client.user.id)
+                );
+            }
+
+            for (const command of commands) {
+                if (restrictedCommands.includes(command.name)) {
+                    const permissions = [{
+                        id: adminRoleId,
+                        type: ApplicationCommandPermissionType.Role,
+                        permission: true
+                    }];
+
+                    try {
+                        if (guildId) {
+                            await rest.put(
+                                Routes.applicationCommandPermissions(this.client.user.id, guildId, command.id),
+                                { body: { permissions } }
+                            );
+                        } else {
+                            // For global commands, permissions need to be set per guild
+                            // This would require iterating through all guilds the bot is in
+                            console.warn(`Cannot set permissions for global command "${command.name}". Use guild-specific commands for role-based permissions.`);
+                        }
+                        console.log(`Set permissions for command: ${command.name}`);
+                    } catch (permError) {
+                        console.error(`Error setting permissions for ${command.name}:`, permError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error setting command permissions:', error);
         }
     }
 

@@ -7,7 +7,8 @@ const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes_list.json')
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('show-downtimes')
-        .setDescription('Show all available and active downtime activities'),
+        .setDescription('Show all available and active downtime activities')
+        .setDefaultPermission(false),
     category: 'downtimes',
     async execute(interaction) {
         try {

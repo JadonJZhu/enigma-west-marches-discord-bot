@@ -7,14 +7,21 @@ const path = require('path');
 const handlers = {
     async sunday_downtime_selection(client) {
         try {
-            // Find the downtimes channel by name
-            const channel = client.channels.cache.find(ch => ch.name === 'downtimes');
+            // Get the specific server
+            const guild = client.guilds.cache.get('1009959008456683660');
+            if (!guild) {
+                console.error('Could not find server with ID: 1009959008456683660');
+                return;
+            }
+
+            // Find the downtimes channel by name within the specific server
+            const channel = guild.channels.cache.find(ch => ch.name === 'downtimes');
 
             if (!channel) {
                 console.error('Could not find channel named "downtimes"');
 
-                // Try to find bot-testing channel for error message
-                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-testing');
+                // Try to find bot-testing channel for error message within the same server
+                const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
                 if (botUpdatesChannel) {
                     await botUpdatesChannel.send('Error: Could not find "downtimes" channel for downtime selection.');
                     console.log('Error message sent to bot-testing channel');
@@ -39,11 +46,20 @@ const handlers = {
                 text: downtime.replace(/:[^:]+:$/, '').trim() // Remove emoji from text
             }));
 
+            // Check if "Go On A Mission 🧙‍♂️" is in the added array
+            const missionDowntime = "Go On A Mission 🧙‍♂️";
+            const hasMissionDowntime = downtimes.added.includes(missionDowntime);
+
+            // Create first poll answers (exclude mission if present)
+            const firstPollAnswers = hasMissionDowntime
+                ? pollAnswers.filter(answer => !answer.text.includes("Go On A Mission"))
+                : pollAnswers;
+
             // Send first choice poll
             await channel.send({
                 poll: {
                     question: { text: 'Choose your FIRST downtime preference for this week:' },
-                    answers: pollAnswers,
+                    answers: firstPollAnswers,
                     duration: 7 * 24, // 1 week in hours
                     allowMultiselect: false
                 }
@@ -67,14 +83,21 @@ const handlers = {
 
     async sunday_qotw(client) {
         try {
-            // Find the qotw channel by name
-            const qotwChannel = client.channels.cache.find(ch => ch.name === 'qotw');
+            // Get the specific server
+            const guild = client.guilds.cache.get('1009959008456683660');
+            if (!guild) {
+                console.error('Could not find server with ID: 1009959008456683660');
+                return;
+            }
+
+            // Find the qotw channel by name within the specific server
+            const qotwChannel = guild.channels.cache.find(ch => ch.name === 'qotw');
 
             if (!qotwChannel) {
                 console.error('Could not find channel named "qotw"');
 
-                // Try to find bot-testing channel for error message
-                const botUpdatesChannel = client.channels.cache.find(ch => ch.name === 'bot-testing');
+                // Try to find bot-testing channel for error message within the same server
+                const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
                 if (botUpdatesChannel) {
                     await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week.');
                     console.log('Error message sent to bot-testing channel');
@@ -128,11 +151,6 @@ const handlers = {
             const qotwMessage = await qotwChannel.send(`**Question of the Week:**\n${currentQuestion}`);
             console.log('QOTW message sent');
 
-            // If this was the last question, also send the "no questions left" message immediately
-            if (currentIndex === questions.length - 1) {
-                await qotwChannel.send('There are no QOTW questions left!');
-                console.log('No QOTW questions left message sent (last question)');
-            }
 
             // Increment the index
             qotw['upcoming-qotw-index'] = currentIndex + 1;

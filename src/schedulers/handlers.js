@@ -151,36 +151,26 @@ const handlers = {
             const qotwMessage = await qotwChannel.send(`**Question of the Week:**\n${currentQuestion}`);
             console.log('QOTW message sent');
 
+            // Pin the QOTW message
+            await qotwMessage.pin();
+            console.log('QOTW message pinned');
+
+            // Record the timestamp and message ID for tracking
+            const now = new Date();
+            qotw['current-qotw'] = {
+                messageId: qotwMessage.id,
+                channelId: qotwChannel.id,
+                startTime: now.toISOString(),
+                endTime: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week later
+                questionIndex: currentIndex
+            };
 
             // Increment the index
             qotw['upcoming-qotw-index'] = currentIndex + 1;
 
             // Save updated data
             await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
-            console.log('QOTW index incremented and saved');
-
-            // Set up indefinite message collector to track respondents
-            const collector = qotwChannel.createMessageCollector({
-                filter: (message) => !message.author.bot // Ignore bot messages
-            });
-
-            collector.on('collect', async (message) => {
-                // Read current qotw data
-                const currentQotwData = await fs.readFile(qotwPath, 'utf8');
-                const currentQotw = JSON.parse(currentQotwData);
-
-                // Initialize respondent-ids array if it doesn't exist
-                if (!currentQotw['respondent-ids']) {
-                    currentQotw['respondent-ids'] = [];
-                }
-
-                // Add user ID if not already present
-                if (!currentQotw['respondent-ids'].includes(message.author.id)) {
-                    currentQotw['respondent-ids'].push(message.author.id);
-                    await fs.writeFile(qotwPath, JSON.stringify(currentQotw, null, 4));
-                    console.log(`Added response from user: ${message.author.username} (${message.author.id})`);
-                }
-            });
+            console.log('QOTW data updated with tracking information');
 
         } catch (error) {
             console.error('Error sending Sunday QOTW:', error);

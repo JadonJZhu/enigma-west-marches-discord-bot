@@ -54,7 +54,7 @@ async function sunday_downtime_selection(client) {
         // Send first choice poll
         await channel.send({
             poll: {
-                question: { text: 'Choose your FIRST downtime for this week:' },
+                question: { text: `Choose your FIRST downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)` },
                 answers: firstPollAnswers,
                 duration: 7 * 24, // 1 week in hours
                 allowMultiselect: false
@@ -64,7 +64,7 @@ async function sunday_downtime_selection(client) {
         // Send second choice poll
         await channel.send({
             poll: {
-                question: { text: 'Choose your SECOND downtime for this week:' },
+                question: { text: `Choose your SECOND downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)` },
                 answers: pollAnswers,
                 duration: 7 * 24, // 1 week in hours
                 allowMultiselect: false

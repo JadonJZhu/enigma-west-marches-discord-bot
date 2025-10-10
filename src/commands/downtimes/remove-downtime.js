@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes_list.json');
+const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes.json');
 
 module.exports = {
     data: new SlashCommandBuilder()

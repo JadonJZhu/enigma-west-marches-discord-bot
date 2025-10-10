@@ -2,13 +2,12 @@ const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes_list.json');
+const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('show-downtimes')
-        .setDescription('Show all available and active downtime activities')
-        .setDefaultPermission(false),
+        .setDescription('Show all available and active downtime activities'),
     category: 'downtimes',
     async execute(interaction) {
         try {
@@ -27,6 +26,8 @@ module.exports = {
 
             // Create the response embed content
             const response = `## Downtime Activities
+
+**Development Reward: ${downtimesData.developmentReward} GP**
 
 ### ✅ Active Downtimes (${downtimesData.added.length})
 ${addedList}

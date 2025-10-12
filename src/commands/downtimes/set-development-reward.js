@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../../utils/logger');
 
 const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes.json');
 
@@ -10,7 +11,7 @@ module.exports = {
         .setDescription('Set the development reward value')
         .addIntegerOption(option =>
             option.setName('reward')
-                .setDescription('The new development reward value')
+                .setDescription('The new development reward value in GP')
                 .setRequired(true)
                 .setMinValue(0)
         ),
@@ -37,7 +38,13 @@ module.exports = {
             });
 
         } catch (error) {
-            console.error('Error handling set-development-reward command:', error);
+            logger.error('Error handling set-development-reward command', {
+                userId: interaction.user.id,
+                guildId: interaction.guild?.id,
+                newReward,
+                error: error.message,
+                stack: error.stack
+            });
             await interaction.reply({
                 content: '❌ There was an error processing your request. Please try again.',
                 ephemeral: true

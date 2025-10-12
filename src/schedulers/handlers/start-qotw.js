@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-async function sunday_qotw(client) {
+async function sunday_start_qotw(client) {
     try {
         // Get the specific server
         const guild = client.guilds.cache.get('1009959008456683660');
@@ -31,21 +31,6 @@ async function sunday_qotw(client) {
         const qotwPath = path.join(__dirname, '../../../data/qotw.json');
         const qotwData = await fs.readFile(qotwPath, 'utf8');
         const qotw = JSON.parse(qotwData);
-
-        // Send reward message to previous respondents and clear the list
-        const previousRespondents = qotw['respondent-ids'] || [];
-        if (previousRespondents.length > 0) {
-            const rewardMessage = qotw['reward-message'] || 'Thanks for participating!';
-            const userMentions = previousRespondents.map(id => `<@${id}>`).join(' ');
-
-            await qotwChannel.send(`${userMentions}\n${rewardMessage}`);
-            console.log('Reward message sent to previous respondents');
-        }
-
-        // Clear respondent IDs for new question
-        qotw['respondent-ids'] = [];
-        await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
-        console.log('Respondent IDs cleared for new QOTW');
 
         // Get current question
         const currentIndex = qotw['upcoming-qotw-index'] || 0;
@@ -97,4 +82,4 @@ async function sunday_qotw(client) {
     }
 }
 
-module.exports = sunday_qotw;
+module.exports = sunday_start_qotw;

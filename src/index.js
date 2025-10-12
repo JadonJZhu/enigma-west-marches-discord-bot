@@ -2,6 +2,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const CommandHandler = require('./handlers/commandHandler');
 const EventHandler = require('./handlers/eventHandler');
 const Scheduler = require('./schedulers/scheduler');
+const logger = require('./utils/logger');
 require('dotenv').config();
 
 const client = new Client({
@@ -33,16 +34,34 @@ async function init() {
         client.scheduler.start();
 
     } catch (error) {
-        console.error('Error during bot initialization:', error);
+        logger.error('Error during bot initialization', { error: error.message, stack: error.stack });
         process.exit(1);
     }
 }
+
+// Global error handlers for uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception', { error: error.message, stack: error.stack });
+    // Give logger time to write before exiting
+    setTimeout(() => {
+        process.exit(1);
+    }, 1000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection', {
+        reason: reason?.message || reason,
+        stack: reason?.stack,
+        promise: promise.toString()
+    });
+    // Don't exit on unhandled rejections in production, just log them
+});
 
 init();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully...');
+    logger.info('Received SIGINT, shutting down gracefully...');
     if (client.scheduler) {
         client.scheduler.stop();
     }
@@ -50,7 +69,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down gracefully...');
+    logger.info('Received SIGTERM, shutting down gracefully...');
     if (client.scheduler) {
         client.scheduler.stop();
     }

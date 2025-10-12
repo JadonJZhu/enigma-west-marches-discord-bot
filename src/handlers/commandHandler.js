@@ -3,6 +3,7 @@ const { Routes } = require('discord-api-types/v9');
 const { Collection, ApplicationCommandPermissionType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../utils/logger');
 
 class CommandHandler {
     constructor(client) {
@@ -78,7 +79,7 @@ class CommandHandler {
             // Set permissions for restricted commands
             await this.setCommandPermissions(guildId);
         } catch (error) {
-            console.error('Error registering slash commands:', error);
+            logger.error('Error registering slash commands', { error: error.message, stack: error.stack });
         }
     }
 
@@ -129,12 +130,16 @@ class CommandHandler {
                         }
                         console.log(`Set permissions for command: ${command.name}`);
                     } catch (permError) {
-                        console.error(`Error setting permissions for ${command.name}:`, permError);
+                        logger.error(`Error setting permissions for ${command.name}`, {
+                            command: command.name,
+                            error: permError.message,
+                            stack: permError.stack
+                        });
                     }
                 }
             }
         } catch (error) {
-            console.error('Error setting command permissions:', error);
+            logger.error('Error setting command permissions', { error: error.message, stack: error.stack });
         }
     }
 
@@ -154,8 +159,9 @@ class CommandHandler {
 
         try {
             command.execute(message, args, this.client);
+            logger.commandExecuted(command.name || commandName, message.author.id, message.guild?.id);
         } catch (error) {
-            console.error('Error executing prefix command:', error);
+            logger.commandExecuted(command.name || commandName, message.author.id, message.guild?.id, false, error);
             message.reply('There was an error executing that command!');
         }
     }
@@ -172,18 +178,27 @@ class CommandHandler {
 
         try {
             await command.execute(interaction);
+            logger.commandExecuted(interaction.commandName, interaction.user.id, interaction.guild?.id);
         } catch (error) {
-            console.error('Error executing slash command:', error);
+            logger.commandExecuted(interaction.commandName, interaction.user.id, interaction.guild?.id, false, error);
 
             const errorMessage = {
                 content: 'There was an error executing this command!',
                 ephemeral: true
             };
 
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(errorMessage);
-            } else {
-                await interaction.reply(errorMessage);
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(errorMessage);
+                } else {
+                    await interaction.reply(errorMessage);
+                }
+            } catch (replyError) {
+                logger.error('Failed to send error reply to user', {
+                    command: interaction.commandName,
+                    userId: interaction.user.id,
+                    replyError: replyError.message
+                });
             }
         }
     }
@@ -201,9 +216,21 @@ class CommandHandler {
         try {
             await command.autocomplete(interaction);
         } catch (error) {
-            console.error('Error handling autocomplete:', error);
+            logger.error('Error handling autocomplete', {
+                command: interaction.commandName,
+                userId: interaction.user.id,
+                error: error.message,
+                stack: error.stack
+            });
             // Respond with empty array on error to prevent interaction failure
-            await interaction.respond([]);
+            try {
+                await interaction.respond([]);
+            } catch (respondError) {
+                logger.error('Failed to respond to autocomplete with empty array', {
+                    command: interaction.commandName,
+                    respondError: respondError.message
+                });
+            }
         }
     }
 

@@ -43,6 +43,9 @@ async function handleQOTWResponse(message) {
         const respondentIds = qotw['respondent-ids'] || [];
         if (respondentIds.includes(message.author.id)) return;
 
+        // Skip messages that start with ">" (likely quotes)
+        if (message.content.startsWith('>')) return;
+
         // Add user to respondents
         respondentIds.push(message.author.id);
         qotw['respondent-ids'] = respondentIds;

@@ -6,12 +6,12 @@ const DOWNTIMES_FILE = path.join(__dirname, '../../../data/downtimes.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('add-downtime')
-        .setDescription('Add a downtime activity to your active list')
+        .setName('enable-downtime')
+        .setDescription('Enable a downtime activity to your active list')
         .setDefaultPermission(false)
         .addStringOption(option =>
             option.setName('activity')
-                .setDescription('The downtime activity to add')
+                .setDescription('The downtime activity to enable')
                 .setRequired(true)
                 .setAutocomplete(true)
         ),
@@ -41,12 +41,12 @@ module.exports = {
             fs.writeFileSync(DOWNTIMES_FILE, JSON.stringify(downtimesData, null, 4));
 
             await interaction.reply({
-                content: `✅ Successfully added **${activity}** to your active downtimes!`,
+                content: `✅ Successfully enabled **${activity}** to your active downtimes!`,
                 ephemeral: false
             });
 
         } catch (error) {
-            console.error('Error handling add-downtime command:', error);
+            console.error('Error handling enable-downtime command:', error);
             await interaction.reply({
                 content: '❌ There was an error processing your request. Please try again.',
                 ephemeral: true

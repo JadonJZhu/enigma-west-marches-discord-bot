@@ -59,9 +59,6 @@ module.exports = {
             // Update the upcoming-qotw-index to the selected question
             qotwData['upcoming-qotw-index'] = questionIndex;
 
-            // Reset respondent-ids since this is a new current question
-            qotwData['respondent-ids'] = [];
-
             // Write the updated data back to the file
             fs.writeFileSync(qotwPath, JSON.stringify(qotwData, null, 4));
 

@@ -1,6 +1,15 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// Helper function to split array into chunks of specified size
+function chunkArray(array, chunkSize) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+}
+
 async function sunday_downtime_selection(client) {
     try {
         // Get the specific server
@@ -51,25 +60,44 @@ async function sunday_downtime_selection(client) {
             ? pollAnswers.filter(answer => !answer.text.includes("Go On A Mission"))
             : pollAnswers;
 
-        // Send first choice poll
-        await channel.send({
-            poll: {
-                question: { text: `Choose your FIRST downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)` },
-                answers: firstPollAnswers,
-                duration: 7 * 24, // 1 week in hours
-                allowMultiselect: false
-            }
-        });
+        // Split answers into chunks of 10 (Discord limit)
+        const MAX_POLL_OPTIONS = 10;
+        const firstPollChunks = chunkArray(firstPollAnswers, MAX_POLL_OPTIONS);
+        const secondPollChunks = chunkArray(pollAnswers, MAX_POLL_OPTIONS);
 
-        // Send second choice poll
-        await channel.send({
-            poll: {
-                question: { text: `Choose your SECOND downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)` },
-                answers: pollAnswers,
-                duration: 7 * 24, // 1 week in hours
-                allowMultiselect: false
-            }
-        });
+        // Send first choice polls
+        for (let i = 0; i < firstPollChunks.length; i++) {
+            const isContinuation = i > 0;
+            const questionText = isContinuation
+                ? `Choose your FIRST downtime for this week (continued)`
+                : `Choose your FIRST downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)`;
+            
+            await channel.send({
+                poll: {
+                    question: { text: questionText },
+                    answers: firstPollChunks[i],
+                    duration: 7 * 24, // 1 week in hours
+                    allowMultiselect: false
+                }
+            });
+        }
+
+        // Send second choice polls
+        for (let i = 0; i < secondPollChunks.length; i++) {
+            const isContinuation = i > 0;
+            const questionText = isContinuation
+                ? `Choose your SECOND downtime for this week (continued)`
+                : `Choose your SECOND downtime for this week: (Development Reward: ${downtimes.developmentReward} GP)`;
+            
+            await channel.send({
+                poll: {
+                    question: { text: questionText },
+                    answers: secondPollChunks[i],
+                    duration: 7 * 24, // 1 week in hours
+                    allowMultiselect: false
+                }
+            });
+        }
 
         console.log('Sunday downtime selection polls sent successfully');
     } catch (error) {

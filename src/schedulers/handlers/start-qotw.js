@@ -43,9 +43,14 @@ async function sunday_start_qotw(client) {
 
         // Check if we've run out of questions
         if (currentIndex >= questions.length) {
-            // Send message indicating no questions left
-            await qotwChannel.send('There are no QOTW questions left!');
-            console.log('No QOTW questions left message sent');
+            // Send message indicating no questions left to bot-testing channel
+            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send('There are no QOTW questions left!');
+                console.log('No QOTW questions left message sent to bot-testing channel');
+            } else {
+                console.error('Could not find "bot-testing" channel. Cannot send no questions left message.');
+            }
             return;
         }
 

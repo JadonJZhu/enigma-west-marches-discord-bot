@@ -80,11 +80,31 @@ async function sunday_start_qotw(client) {
         qotw['upcoming-qotw-index'] = currentIndex + 1;
 
         // Save updated data
-        await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
-        logger.info('QOTW data updated with tracking information');
+        try {
+            await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
+            logger.info('QOTW data updated with tracking information');
+        } catch (writeError) {
+            logger.error('Failed to save QOTW data after sending message:', writeError);
+            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send(
+                    `⚠️ QOTW was posted successfully, but failed to save tracking data to qotw.json: ${writeError.message}\n` +
+                    `The same question (index ${currentIndex}) may be re-posted next week. Please update qotw.json manually.`
+                );
+            }
+        }
 
     } catch (error) {
         logger.error('Error sending Sunday QOTW:', error);
+        try {
+            const guild = client.guilds.cache.get('1009959008456683660');
+            const botUpdatesChannel = guild?.channels.cache.find(ch => ch.name === 'bot-testing');
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send(`❌ QOTW start failed: ${error.message}`);
+            }
+        } catch (notifyError) {
+            logger.error('Failed to send QOTW start error notification:', notifyError);
+        }
     }
 }
 

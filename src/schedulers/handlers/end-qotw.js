@@ -33,6 +33,23 @@ async function sunday_end_qotw(client) {
         const qotwData = await fs.readFile(qotwPath, 'utf8');
         const qotw = JSON.parse(qotwData);
 
+        // Unpin the previous QOTW message
+        const currentQotw = qotw['current-qotw'];
+        if (currentQotw?.messageId && currentQotw?.channelId) {
+            try {
+                const channel = guild.channels.cache.get(currentQotw.channelId);
+                if (channel) {
+                    const message = await channel.messages.fetch(currentQotw.messageId);
+                    if (message.pinned) {
+                        await message.unpin();
+                        logger.info('Previous QOTW message unpinned');
+                    }
+                }
+            } catch (unpinError) {
+                logger.error('Failed to unpin previous QOTW message:', unpinError);
+            }
+        }
+
         // Send reward message to previous respondents and clear the list
         const previousRespondents = qotw['respondent-ids'] || [];
         if (previousRespondents.length > 0) {
@@ -45,11 +62,31 @@ async function sunday_end_qotw(client) {
 
         // Clear respondent IDs for new question
         qotw['respondent-ids'] = [];
-        await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
-        logger.info('Respondent IDs cleared for new QOTW');
+        try {
+            await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
+            logger.info('Respondent IDs cleared for new QOTW');
+        } catch (writeError) {
+            logger.error('Failed to save QOTW data after sending rewards:', writeError);
+            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send(
+                    `⚠️ QOTW rewards were sent, but failed to clear respondent IDs in qotw.json: ${writeError.message}\n` +
+                    `The same users may be rewarded again next week. Please clear respondent-ids manually.`
+                );
+            }
+        }
 
     } catch (error) {
         logger.error('Error sending Sunday QOTW rewards:', error);
+        try {
+            const guild = client.guilds.cache.get('1009959008456683660');
+            const botUpdatesChannel = guild?.channels.cache.find(ch => ch.name === 'bot-testing');
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send(`❌ QOTW end/rewards failed: ${error.message}`);
+            }
+        } catch (notifyError) {
+            logger.error('Failed to send QOTW end error notification:', notifyError);
+        }
     }
 }
 

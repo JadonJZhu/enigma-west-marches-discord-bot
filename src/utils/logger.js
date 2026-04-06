@@ -4,11 +4,15 @@ const DailyRotateFile = require('winston-daily-rotate-file');
 
 // Define log directory
 const LOG_DIR = path.join(__dirname, '../../logs');
+const AUDIT_DIR = path.join(LOG_DIR, '.audit');
 
-// Create logs directory if it doesn't exist
+// Create directories if they don't exist
 const fs = require('fs');
 if (!fs.existsSync(LOG_DIR)) {
     fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+if (!fs.existsSync(AUDIT_DIR)) {
+    fs.mkdirSync(AUDIT_DIR, { recursive: true });
 }
 
 // Custom log format
@@ -39,7 +43,8 @@ const errorTransport = new DailyRotateFile({
     maxSize: '20m',
     maxFiles: '30d',
     level: 'error',
-    format: logFormat
+    format: logFormat,
+    auditFile: path.join(AUDIT_DIR, 'error-audit.json')
 });
 
 // Combined log transport (rotates daily, keeps 14 days)
@@ -48,7 +53,8 @@ const combinedTransport = new DailyRotateFile({
     datePattern: 'YYYY-MM-DD',
     maxSize: '20m',
     maxFiles: '14d',
-    format: logFormat
+    format: logFormat,
+    auditFile: path.join(AUDIT_DIR, 'combined-audit.json')
 });
 
 // Console transport for development
@@ -67,18 +73,15 @@ const logger = winston.createLogger({
         combinedTransport,
         consoleTransport
     ],
-    // Handle exceptions and rejections
+    // Exceptions and rejections go through the same error + combined transports
+    // so they appear in error-*.log alongside other errors (no separate files)
     exceptionHandlers: [
-        new winston.transports.File({
-            filename: path.join(LOG_DIR, 'exceptions.log'),
-            format: logFormat
-        })
+        errorTransport,
+        consoleTransport
     ],
     rejectionHandlers: [
-        new winston.transports.File({
-            filename: path.join(LOG_DIR, 'rejections.log'),
-            format: logFormat
-        })
+        errorTransport,
+        consoleTransport
     ]
 });
 

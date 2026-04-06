@@ -1,12 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
+const logger = require('../../utils/logger');
 
 async function sunday_start_qotw(client) {
     try {
         // Get the specific server
         const guild = client.guilds.cache.get('1009959008456683660');
         if (!guild) {
-            console.error('Could not find server with ID: 1009959008456683660');
+            logger.error('Could not find server with ID: 1009959008456683660');
             return;
         }
 
@@ -14,15 +15,15 @@ async function sunday_start_qotw(client) {
         const qotwChannel = guild.channels.cache.find(ch => ch.name === 'qotw');
 
         if (!qotwChannel) {
-            console.error('Could not find channel named "qotw"');
+            logger.error('Could not find channel named "qotw"');
 
             // Try to find bot-testing channel for error message within the same server
             const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
             if (botUpdatesChannel) {
                 await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week.');
-                console.log('Error message sent to bot-testing channel');
+                logger.info('Error message sent to bot-testing channel');
             } else {
-                console.error('Could not find "bot-testing" channel either. Doing nothing.');
+                logger.error('Could not find "bot-testing" channel either. Doing nothing.');
             }
             return;
         }
@@ -37,7 +38,7 @@ async function sunday_start_qotw(client) {
         const questions = qotw.qotw || [];
 
         if (questions.length === 0) {
-            console.log('No QOTW questions available');
+            logger.info('No QOTW questions available');
             return;
         }
 
@@ -47,9 +48,9 @@ async function sunday_start_qotw(client) {
             const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
             if (botUpdatesChannel) {
                 await botUpdatesChannel.send('There are no QOTW questions left!');
-                console.log('No QOTW questions left message sent to bot-testing channel');
+                logger.info('No QOTW questions left message sent to bot-testing channel');
             } else {
-                console.error('Could not find "bot-testing" channel. Cannot send no questions left message.');
+                logger.error('Could not find "bot-testing" channel. Cannot send no questions left message.');
             }
             return;
         }
@@ -59,11 +60,11 @@ async function sunday_start_qotw(client) {
 
         // Send the question
         const qotwMessage = await qotwChannel.send(`**Question of the Week:**\n${currentQuestion}`);
-        console.log('QOTW message sent');
+        logger.info('QOTW message sent');
 
         // Pin the QOTW message
         await qotwMessage.pin();
-        console.log('QOTW message pinned');
+        logger.info('QOTW message pinned');
 
         // Record the timestamp and message ID for tracking
         const now = new Date();
@@ -80,10 +81,10 @@ async function sunday_start_qotw(client) {
 
         // Save updated data
         await fs.writeFile(qotwPath, JSON.stringify(qotw, null, 4));
-        console.log('QOTW data updated with tracking information');
+        logger.info('QOTW data updated with tracking information');
 
     } catch (error) {
-        console.error('Error sending Sunday QOTW:', error);
+        logger.error('Error sending Sunday QOTW:', error);
     }
 }
 

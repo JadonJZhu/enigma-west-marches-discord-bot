@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const logger = require('../../utils/logger');
 
 // Helper function to split array into chunks of specified size
 function chunkArray(array, chunkSize) {
@@ -15,7 +16,7 @@ async function sunday_downtime_selection(client) {
         // Get the specific server
         const guild = client.guilds.cache.get('1009959008456683660');
         if (!guild) {
-            console.error('Could not find server with ID: 1009959008456683660');
+            logger.error('Could not find server with ID: 1009959008456683660');
             return;
         }
 
@@ -23,15 +24,15 @@ async function sunday_downtime_selection(client) {
         const channel = guild.channels.cache.find(ch => ch.name === 'downtimes');
 
         if (!channel) {
-            console.error('Could not find channel named "downtimes"');
+            logger.error('Could not find channel named "downtimes"');
 
             // Try to find bot-testing channel for error message within the same server
             const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
             if (botUpdatesChannel) {
                 await botUpdatesChannel.send('Error: Could not find "downtimes" channel for downtime selection.');
-                console.log('Error message sent to bot-testing channel');
+                logger.info('Error message sent to bot-testing channel');
             } else {
-                console.error('Could not find "bot-testing" channel either. Doing nothing.');
+                logger.error('Could not find "bot-testing" channel either. Doing nothing.');
             }
             return;
         }
@@ -42,7 +43,7 @@ async function sunday_downtime_selection(client) {
         const downtimes = JSON.parse(downtimesData);
 
         if (!downtimes.added || downtimes.added.length === 0) {
-            console.log('No added downtimes found');
+            logger.info('No added downtimes found');
             return;
         }
 
@@ -99,9 +100,9 @@ async function sunday_downtime_selection(client) {
             });
         }
 
-        console.log('Sunday downtime selection polls sent successfully');
+        logger.info('Sunday downtime selection polls sent successfully');
     } catch (error) {
-        console.error('Error sending Sunday downtime selection:', error);
+        logger.error('Error sending Sunday downtime selection:', error);
     }
 }
 

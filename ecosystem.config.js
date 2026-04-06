@@ -9,10 +9,11 @@ module.exports = {
     env: {
       NODE_ENV: 'production'
     },
-    // PM2 log configuration
-    log_file: './logs/pm2-combined.log',
-    out_file: './logs/pm2-out.log',
-    error_file: './logs/pm2-error.log',
+    // PM2 log configuration - single file for process-level output (startup, crashes, restarts)
+    // App-level logging (errors, info) is handled by winston → combined-*.log and error-*.log
+    out_file: './logs/pm2-process.log',
+    error_file: './logs/pm2-process.log',
+    merge_logs: true,
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     // Restart configuration
     min_uptime: '10s',

@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const schedules = require('./schedules');
 const handlers = require('./handlers');
+const logger = require('../utils/logger');
 
 class Scheduler {
     constructor(client) {
@@ -9,7 +10,7 @@ class Scheduler {
     }
 
     start() {
-        console.log('Starting scheduler...');
+        logger.info('Starting scheduler...');
 
         // Schedule all defined events
         schedules.forEach(schedule => {
@@ -18,7 +19,7 @@ class Scheduler {
             }
         });
 
-        console.log(`Scheduler started successfully with ${this.scheduledTasks.length} active tasks`);
+        logger.info(`Scheduler started successfully with ${this.scheduledTasks.length} active tasks`);
     }
 
     // Generic method to schedule any event
@@ -26,7 +27,7 @@ class Scheduler {
         try {
             const handler = handlers[schedule.name];
             if (!handler) {
-                console.error(`No handler found for schedule: ${schedule.name}`);
+                logger.error(`No handler found for schedule: ${schedule.name}`);
                 return;
             }
 
@@ -41,9 +42,9 @@ class Scheduler {
                 task: task
             });
 
-            console.log(`Scheduled: ${schedule.name} (${schedule.cronExpression}) - ${schedule.description || ''}`);
+            logger.info(`Scheduled: ${schedule.name} (${schedule.cronExpression}) - ${schedule.description || ''}`);
         } catch (error) {
-            console.error(`Failed to schedule ${schedule.name}:`, error);
+            logger.error(`Failed to schedule ${schedule.name}:`, error);
         }
     }
 
@@ -88,10 +89,10 @@ class Scheduler {
     }
 
     stop() {
-        console.log('Stopping scheduler...');
+        logger.info('Stopping scheduler...');
         this.scheduledTasks.forEach(({ task }) => task.stop());
         this.scheduledTasks = [];
-        console.log('Scheduler stopped');
+        logger.info('Scheduler stopped');
     }
 }
 

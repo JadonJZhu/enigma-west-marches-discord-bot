@@ -1,6 +1,23 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
+const env = require('../../config/env');
+
+async function getGuildChannel(guild, channelId) {
+    if (!channelId) {
+        return null;
+    }
+
+    return guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+}
+
+async function getBotUpdatesChannel(guild) {
+    if (env.BOT_UPDATES_CHANNEL_ID) {
+        return getGuildChannel(guild, env.BOT_UPDATES_CHANNEL_ID);
+    }
+
+    return guild.channels.cache.find(ch => ch.name === 'bot-testing');
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,28 +30,27 @@ module.exports = {
             const client = interaction.client;
 
             // Get the specific server
-            const guild = client.guilds.cache.get('1009959008456683660');
+            const guild = client.guilds.cache.get(env.GUILD_ID);
             if (!guild) {
-                console.error('Could not find server with ID: 1009959008456683660');
+                console.error(`Could not find server with ID: ${env.GUILD_ID}`);
                 await interaction.reply('❌ Error: Could not find the server.');
                 return;
             }
 
-            // Find the qotw channel by name within the specific server
-            const qotwChannel = guild.channels.cache.find(ch => ch.name === 'qotw');
+            // Fetch the configured qotw channel directly by ID.
+            const qotwChannel = await getGuildChannel(guild, env.QOTW_CHANNEL_ID);
 
             if (!qotwChannel) {
-                console.error('Could not find channel named "qotw"');
+                console.error(`Could not find QOTW channel with ID: ${env.QOTW_CHANNEL_ID}`);
 
-                // Try to find bot-testing channel for error message within the same server
-                const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+                const botUpdatesChannel = await getBotUpdatesChannel(guild);
                 if (botUpdatesChannel) {
-                    await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week.');
+                    await botUpdatesChannel.send(`<@${env.OWNER_ID}> Error: Could not find configured QOTW channel for Question of the Week.`);
                     console.log('Error message sent to bot-testing channel');
                 } else {
                     console.error('Could not find "bot-testing" channel either. Doing nothing.');
                 }
-                await interaction.reply('❌ Error: Could not find "qotw" channel.');
+                await interaction.reply('❌ Error: Could not find the configured QOTW channel.');
                 return;
             }
 

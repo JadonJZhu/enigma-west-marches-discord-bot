@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const env = require('../../config/env');
 const logger = require('../../utils/logger');
 
 // Helper function to split array into chunks of specified size
@@ -11,25 +12,40 @@ function chunkArray(array, chunkSize) {
     return chunks;
 }
 
+async function getGuildChannel(guild, channelId) {
+    if (!channelId) {
+        return null;
+    }
+
+    return guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+}
+
+async function getBotUpdatesChannel(guild) {
+    if (env.BOT_UPDATES_CHANNEL_ID) {
+        return getGuildChannel(guild, env.BOT_UPDATES_CHANNEL_ID);
+    }
+
+    return guild.channels.cache.find(ch => ch.name === 'bot-testing');
+}
+
 async function sunday_downtime_selection(client) {
     try {
         // Get the specific server
-        const guild = client.guilds.cache.get('1009959008456683660');
+        const guild = client.guilds.cache.get(env.GUILD_ID);
         if (!guild) {
-            logger.error('Could not find server with ID: 1009959008456683660');
+            logger.error(`Could not find server with ID: ${env.GUILD_ID}`);
             return;
         }
 
-        // Find the downtimes channel by name within the specific server
-        const channel = guild.channels.cache.find(ch => ch.name === 'downtimes');
+        // Fetch the configured downtimes channel directly by ID.
+        const channel = await getGuildChannel(guild, env.DOWNTIME_CHANNEL_ID);
 
         if (!channel) {
-            logger.error('Could not find channel named "downtimes"');
+            logger.error(`Could not find downtime channel with ID: ${env.DOWNTIME_CHANNEL_ID}`);
 
-            // Try to find bot-testing channel for error message within the same server
-            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            const botUpdatesChannel = await getBotUpdatesChannel(guild);
             if (botUpdatesChannel) {
-                await botUpdatesChannel.send('Error: Could not find "downtimes" channel for downtime selection.');
+                await botUpdatesChannel.send(`<@${env.OWNER_ID}> Error: Could not find configured downtime channel for downtime selection.`);
                 logger.info('Error message sent to bot-testing channel');
             } else {
                 logger.error('Could not find "bot-testing" channel either. Doing nothing.');

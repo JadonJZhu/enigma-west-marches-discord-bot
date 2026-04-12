@@ -1,26 +1,42 @@
 const fs = require('fs').promises;
 const path = require('path');
+const env = require('../../config/env');
 const logger = require('../../utils/logger');
+
+async function getGuildChannel(guild, channelId) {
+    if (!channelId) {
+        return null;
+    }
+
+    return guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+}
+
+async function getBotUpdatesChannel(guild) {
+    if (env.BOT_UPDATES_CHANNEL_ID) {
+        return getGuildChannel(guild, env.BOT_UPDATES_CHANNEL_ID);
+    }
+
+    return guild.channels.cache.find(ch => ch.name === 'bot-testing');
+}
 
 async function sunday_end_qotw(client) {
     try {
         // Get the specific server
-        const guild = client.guilds.cache.get('1009959008456683660');
+        const guild = client.guilds.cache.get(env.GUILD_ID);
         if (!guild) {
-            logger.error('Could not find server with ID: 1009959008456683660');
+            logger.error(`Could not find server with ID: ${env.GUILD_ID}`);
             return;
         }
 
-        // Find the qotw channel by name within the specific server
-        const qotwChannel = guild.channels.cache.find(ch => ch.name === 'qotw');
+        // Fetch the configured qotw channel directly by ID.
+        const qotwChannel = await getGuildChannel(guild, env.QOTW_CHANNEL_ID);
 
         if (!qotwChannel) {
-            logger.error('Could not find channel named "qotw"');
+            logger.error(`Could not find QOTW channel with ID: ${env.QOTW_CHANNEL_ID}`);
 
-            // Try to find bot-testing channel for error message within the same server
-            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            const botUpdatesChannel = await getBotUpdatesChannel(guild);
             if (botUpdatesChannel) {
-                await botUpdatesChannel.send('Error: Could not find "qotw" channel for Question of the Week rewards.');
+                await botUpdatesChannel.send(`<@${env.OWNER_ID}> Error: Could not find configured QOTW channel for Question of the Week rewards.`);
                 logger.info('Error message sent to bot-testing channel');
             } else {
                 logger.error('Could not find "bot-testing" channel either. Doing nothing.');
@@ -58,6 +74,12 @@ async function sunday_end_qotw(client) {
 
             await qotwChannel.send(`${userMentions}\n${rewardMessage}`);
             logger.info('Reward message sent to previous respondents');
+        } else {
+            const botUpdatesChannel = await getBotUpdatesChannel(guild);
+            if (botUpdatesChannel) {
+                await botUpdatesChannel.send(`<@${env.OWNER_ID}> No respondents for this week's QOTW. No rewards were sent.`);
+                logger.info('No respondents notification sent to bot-testing channel');
+            }
         }
 
         // Clear respondent IDs for new question
@@ -67,10 +89,10 @@ async function sunday_end_qotw(client) {
             logger.info('Respondent IDs cleared for new QOTW');
         } catch (writeError) {
             logger.error('Failed to save QOTW data after sending rewards:', writeError);
-            const botUpdatesChannel = guild.channels.cache.find(ch => ch.name === 'bot-testing');
+            const botUpdatesChannel = await getBotUpdatesChannel(guild);
             if (botUpdatesChannel) {
                 await botUpdatesChannel.send(
-                    `⚠️ QOTW rewards were sent, but failed to clear respondent IDs in qotw.json: ${writeError.message}\n` +
+                    `<@${env.OWNER_ID}> ⚠️ QOTW rewards were sent, but failed to clear respondent IDs in qotw.json: ${writeError.message}\n` +
                     `The same users may be rewarded again next week. Please clear respondent-ids manually.`
                 );
             }
@@ -79,10 +101,10 @@ async function sunday_end_qotw(client) {
     } catch (error) {
         logger.error('Error sending Sunday QOTW rewards:', error);
         try {
-            const guild = client.guilds.cache.get('1009959008456683660');
-            const botUpdatesChannel = guild?.channels.cache.find(ch => ch.name === 'bot-testing');
+            const guild = client.guilds.cache.get(env.GUILD_ID);
+            const botUpdatesChannel = guild ? await getBotUpdatesChannel(guild) : null;
             if (botUpdatesChannel) {
-                await botUpdatesChannel.send(`❌ QOTW end/rewards failed: ${error.message}`);
+                await botUpdatesChannel.send(`<@${env.OWNER_ID}> ❌ QOTW end/rewards failed: ${error.message}`);
             }
         } catch (notifyError) {
             logger.error('Failed to send QOTW end error notification:', notifyError);
